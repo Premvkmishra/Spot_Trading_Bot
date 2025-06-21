@@ -3,10 +3,11 @@ services:
     name: binance-trading-bot
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: API_KEY
         sync: false
       - key: API_SECRET
         sync: false
-    autoDeploy: true 
+    autoDeploy: true
+    plan: free 
