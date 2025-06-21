@@ -25,61 +25,68 @@
                     <div class="details-grid">
                         <div class="detail-item">
                             <label>Order ID:</label>
-                            <span class="value">{{ order_response.orderId }}</span>
+                            <span class="value">{{ order_response['orderId'] }}</span>
                         </div>
                         
                         <div class="detail-item">
                             <label>Symbol:</label>
-                            <span class="value">{{ order_response.symbol }}</span>
+                            <span class="value">{{ order_response['symbol'] }}</span>
                         </div>
                         
                         <div class="detail-item">
                             <label>Side:</label>
-                            <span class="value {{ 'buy-text' if order_response.side == 'BUY' else 'sell-text' }}">
-                                {{ '🟢 ' + order_response.side if order_response.side == 'BUY' else '🔴 ' + order_response.side }}
+                            <span class="value {{ 'buy-text' if order_response['side'] == 'BUY' else 'sell-text' }}">
+                                {{ '🟢 ' + order_response['side'] if order_response['side'] == 'BUY' else '🔴 ' + order_response['side'] }}
                             </span>
                         </div>
                         
                         <div class="detail-item">
                             <label>Order Type:</label>
-                            <span class="value">{{ order_response.type }}</span>
+                            <span class="value">{{ order_response['type'] }}</span>
                         </div>
                         
                         <div class="detail-item">
                             <label>Quantity:</label>
-                            <span class="value">{{ order_response.origQty }}</span>
+                            <span class="value">{{ order_response['origQty'] }}</span>
                         </div>
                         
                         <div class="detail-item">
                             <label>Status:</label>
-                            <span class="value status-{{ order_response.status.lower() }}">{{ order_response.status }}</span>
+                            <span class="value status-{{ order_response['status'].lower() }}">{{ order_response['status'] }}</span>
                         </div>
                         
-                        {% if order_response.executedQty %}
+                        {% if order_response['executedQty'] %}
                         <div class="detail-item">
                             <label>Executed Quantity:</label>
-                            <span class="value">{{ order_response.executedQty }}</span>
+                            <span class="value">{{ order_response['executedQty'] }}</span>
                         </div>
                         {% endif %}
                         
-                        {% if order_response.avgPrice and order_response.avgPrice != '0' %}
+                        {% if order_response['avgPrice'] and order_response['avgPrice'] != '0' %}
                         <div class="detail-item">
                             <label>Average Price:</label>
-                            <span class="value">${{ order_response.avgPrice }}</span>
+                            <span class="value">${{ order_response['avgPrice'] }}</span>
                         </div>
                         {% endif %}
                         
-                        {% if order_response.price and order_response.price != '0' %}
+                        {% if order_response['price'] and order_response['price'] != '0' %}
                         <div class="detail-item">
                             <label>Limit Price:</label>
-                            <span class="value">${{ order_response.price }}</span>
+                            <span class="value">${{ order_response['price'] }}</span>
                         </div>
                         {% endif %}
                         
-                        {% if order_response.cumQuote and order_response.cumQuote != '0' %}
+                        {% if order_response['stopPrice'] and order_response['stopPrice'] != '0' %}
+                        <div class="detail-item">
+                            <label>Stop Price:</label>
+                            <span class="value">${{ order_response['stopPrice'] }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order_response['cumQuote'] and order_response['cumQuote'] != '0' %}
                         <div class="detail-item">
                             <label>Total Value:</label>
-                            <span class="value">${{ order_response.cumQuote }}</span>
+                            <span class="value">${{ order_response['cumQuote'] }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -88,18 +95,18 @@
                 <div class="trade-summary">
                     <h3>📊 Trade Summary</h3>
                     <p>
-                        {% if order_response.side == 'BUY' %}
-                        You have placed a <strong>{{ order_response.type.lower() }}</strong> order to <strong class="buy-text">buy {{ order_response.origQty }}</strong> 
+                        {% if order_response['side'] == 'BUY' %}
+                        You have placed a <strong>{{ order_response['type'].lower() }}</strong> order to <strong class="buy-text">buy {{ order_response['origQty'] }}</strong> 
                         {% else %}
-                        You have placed a <strong>{{ order_response.type.lower() }}</strong> order to <strong class="sell-text">sell {{ order_response.origQty }}</strong> 
+                        You have placed a <strong>{{ order_response['type'].lower() }}</strong> order to <strong class="sell-text">sell {{ order_response['origQty'] }}</strong> 
                         {% endif %}
-                        of <strong>{{ order_response.symbol }}</strong>.
+                        of <strong>{{ order_response['symbol'] }}</strong>.
                         
-                        {% if order_response.status == 'FILLED' %}
+                        {% if order_response['status'] == 'FILLED' %}
                         The order has been <strong class="success-text">completely filled</strong>.
-                        {% elif order_response.status == 'PARTIALLY_FILLED' %}
+                        {% elif order_response['status'] == 'PARTIALLY_FILLED' %}
                         The order has been <strong class="warning-text">partially filled</strong>.
-                        {% elif order_response.status == 'NEW' %}
+                        {% elif order_response['status'] == 'NEW' %}
                         The order is <strong class="info-text">pending execution</strong>.
                         {% endif %}
                     </p>
@@ -151,13 +158,20 @@
                             <span class="value">${{ trade_data.price }}</span>
                         </div>
                         {% endif %}
+                        
+                        {% if trade_data.stop_price %}
+                        <div class="detail-item">
+                            <label>Stop Price:</label>
+                            <span class="value">${{ trade_data.stop_price }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 
                 <div class="troubleshooting">
                     <h3>🔧 Troubleshooting Tips</h3>
                     <ul>
-                        <li>Verify that the trading symbol is correct and available on Binance Futures</li>
+                        <li>Verify that the trading symbol is correct and available on Binance Spot</li>
                         <li>Check that your testnet account has sufficient balance</li>
                         <li>Ensure the quantity meets the minimum order requirements</li>
                         <li>For limit orders, verify the price is within acceptable range</li>
@@ -179,7 +193,7 @@
 
         <footer>
             <p>⚠️ Testnet Environment - No Real Money Involved</p>
-            <p><small>Order timestamp: {{ order_response.time if success and order_response.time else '' }}</small></p>
+            <p><small>Order timestamp: {{ order_response['time'] if success and order_response['time'] else '' }}</small></p>
         </footer>
     </div>
 
@@ -199,6 +213,13 @@
                     el.style.color = '#f59e0b';
                 }
             });
+
+            // Auto-refresh for pending orders
+            {% if success and order_response['status'] == 'NEW' %}
+            setTimeout(function() {
+                location.reload();
+            }, 5000); // Refresh every 5 seconds for pending orders
+            {% endif %}
         });
     </script>
 </body>

@@ -50,95 +50,83 @@ async def place_order(
     quantity: float = Form(...),
     order_type: str = Form(...),
     side: str = Form(...),
-    price: Optional[float] = Form(None)
+    price: Optional[float] = Form(None),
+    stop_price: Optional[float] = Form(None)
 ):
-    """Process trade form submission and place order"""
-    
-    # Validation
-    errors = []
-    
-    # Validate symbol
-    if not validate_symbol(symbol):
-        errors.append("Invalid symbol format. Use uppercase format like BTCUSDT")
-    
-    # Validate quantity
-    if not validate_quantity(quantity):
-        errors.append("Quantity must be positive and at least 0.0001")
-    
-    # Validate price for limit orders
-    if not validate_price(price, order_type):
-        errors.append("Price is required for limit orders and must be positive")
-    
-    # Validate order type and side
-    if order_type.upper() not in ["MARKET", "LIMIT"]:
-        errors.append("Order type must be MARKET or LIMIT")
-    
-    if side.upper() not in ["BUY", "SELL"]:
-        errors.append("Side must be BUY or SELL")
-    
-    # If validation errors, return to form with errors
-    if errors:
-        logger.warning(f"Validation errors: {errors}")
-        return templates.TemplateResponse(
-            "index.html", 
-            {"request": request, "errors": errors}
-        )
-    
-    # Log the trade attempt
-    trade_data = {
-        "symbol": symbol.upper(),
-        "quantity": quantity,
-        "order_type": order_type.upper(),
-        "side": side.upper(),
-        "price": price
-    }
-    logger.info(f"Trade attempt: {trade_data}")
-    
+    """
+    Place an order on Binance Vision Testnet
+    """
     try:
+        # Validate symbol format
+        if not re.match(r'^[A-Z0-9]+$', symbol):
+            raise HTTPException(status_code=400, detail="Invalid symbol format")
+        
+        # Validate order type
+        if order_type not in ['MARKET', 'LIMIT', 'STOP_LIMIT']:
+            raise HTTPException(status_code=400, detail="Invalid order type")
+        
+        # Validate side
+        if side not in ['BUY', 'SELL']:
+            raise HTTPException(status_code=400, detail="Invalid side")
+        
+        # Validate price requirements
+        if order_type in ['LIMIT', 'STOP_LIMIT'] and price is None:
+            raise HTTPException(status_code=400, detail="Price is required for LIMIT and STOP_LIMIT orders")
+        
+        # Validate stop price for Stop-Limit orders
+        if order_type == 'STOP_LIMIT' and stop_price is None:
+            raise HTTPException(status_code=400, detail="Stop price is required for STOP_LIMIT orders")
+        
+        # Log the trade attempt
+        trade_data = {
+            'symbol': symbol,
+            'quantity': quantity,
+            'order_type': order_type,
+            'side': side,
+            'price': price,
+            'stop_price': stop_price
+        }
+        logger.info(f"Trade attempt: {trade_data}")
+        
         # Place the order
         order_response = binance_client.place_order(
-            symbol=symbol.upper(),
+            symbol=symbol,
             quantity=quantity,
-            order_type=order_type.upper(),
-            side=side.upper(),
-            price=price
+            order_type=order_type,
+            side=side,
+            price=price,
+            stop_price=stop_price
         )
         
-        logger.info(f"Order successful: {order_response}")
+        # Log successful order
+        logger.info(f"Order placed successfully: {order_response}")
         
-        return templates.TemplateResponse(
-            "result.html",
-            {
-                "request": request,
-                "success": True,
-                "order_response": order_response,
-                "trade_data": trade_data
-            }
-        )
+        # Return success page
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "success": True,
+            "order_response": order_response,
+            "trade_data": trade_data
+        })
         
     except Exception as e:
-        error_msg = str(e)
-        logger.error(f"Order failed: {error_msg}")
+        # Log the error
+        logger.error(f"Order failed: {str(e)}")
         
-        # Map common Binance errors to user-friendly messages
-        if "Invalid symbol" in error_msg:
-            error_msg = "Invalid trading symbol. Please check the symbol name."
-        elif "Insufficient balance" in error_msg:
-            error_msg = "Insufficient balance for this order."
-        elif "MIN_NOTIONAL" in error_msg:
-            error_msg = "Order value is too small. Please increase quantity or price."
-        elif "PRICE_FILTER" in error_msg:
-            error_msg = "Price is outside allowed range for this symbol."
-        
-        return templates.TemplateResponse(
-            "result.html",
-            {
-                "request": request,
-                "success": False,
-                "error_message": error_msg,
-                "trade_data": trade_data
+        # Return error page
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "success": False,
+            "error_message": str(e),
+            "trade_data": {
+                'symbol': symbol,
+                'quantity': quantity,
+                'order_type': order_type,
+                'side': side,
+                'price': price,
+                'stop_price': stop_price
             }
-        )
+        })
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

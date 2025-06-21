@@ -59,30 +59,17 @@
                             <small>Minimum: 0.0001</small>
                         </div>
 
-                        <div class="form-group" id="price-group" style="display: none;">
-                            <label for="price">Price (USDT):</label>
-                            <input 
-                                type="number" 
-                                id="price" 
-                                name="price" 
-                                step="0.01" 
-                                min="0.01"
-                                placeholder="60000.00"
-                            >
-                            <small>For limit orders only</small>
+                        <div class="form-group">
+                            <label for="order_type">Order Type:</label>
+                            <select id="order_type" name="order_type" required>
+                                <option value="MARKET">Market</option>
+                                <option value="LIMIT">Limit</option>
+                                <option value="STOP_LIMIT">Stop-Limit</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="order_type">Order Type:</label>
-                            <select id="order_type" name="order_type" required onchange="togglePriceField()">
-                                <option value="">Select Order Type</option>
-                                <option value="MARKET">Market Order</option>
-                                <option value="LIMIT">Limit Order</option>
-                            </select>
-                        </div>
-
                         <div class="form-group">
                             <label for="side">Side:</label>
                             <select id="side" name="side" required>
@@ -91,6 +78,16 @@
                                 <option value="SELL" class="sell-option">🔴 Sell</option>
                             </select>
                         </div>
+
+                        <div class="form-group" id="price_group">
+                            <label for="price">Price (USDT):</label>
+                            <input type="number" id="price" name="price" step="0.01" min="0" placeholder="Required for Limit and Stop-Limit orders">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="stop_price_group" style="display: none;">
+                        <label for="stop_price">Stop Price (USDT):</label>
+                        <input type="number" id="stop_price" name="stop_price" step="0.01" min="0" placeholder="Required for Stop-Limit orders">
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -118,18 +115,36 @@
     <script>
         function togglePriceField() {
             const orderType = document.getElementById('order_type').value;
-            const priceGroup = document.getElementById('price-group');
-            const priceInput = document.getElementById('price');
+            const priceGroup = document.getElementById('price_group');
+            const priceField = document.getElementById('price');
+            const stopPriceGroup = document.getElementById('stop_price_group');
+            const stopPriceField = document.getElementById('stop_price');
             
-            if (orderType === 'LIMIT') {
-                priceGroup.style.display = 'block';
-                priceInput.required = true;
-            } else {
+            if (orderType === 'MARKET') {
                 priceGroup.style.display = 'none';
-                priceInput.required = false;
-                priceInput.value = '';
+                stopPriceGroup.style.display = 'none';
+                priceField.removeAttribute('required');
+                stopPriceField.removeAttribute('required');
+            } else if (orderType === 'LIMIT') {
+                priceGroup.style.display = 'block';
+                stopPriceGroup.style.display = 'none';
+                priceField.setAttribute('required', 'required');
+                stopPriceField.removeAttribute('required');
+            } else if (orderType === 'STOP_LIMIT') {
+                priceGroup.style.display = 'block';
+                stopPriceGroup.style.display = 'block';
+                priceField.setAttribute('required', 'required');
+                stopPriceField.setAttribute('required', 'required');
             }
         }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePriceField();
+        });
+        
+        // Add event listener to order type select
+        document.getElementById('order_type').addEventListener('change', togglePriceField);
 
         // Auto-uppercase symbol input
         document.getElementById('symbol').addEventListener('input', function(e) {
@@ -143,6 +158,7 @@
             const orderType = document.getElementById('order_type').value;
             const side = document.getElementById('side').value;
             const price = parseFloat(document.getElementById('price').value);
+            const stopPrice = parseFloat(document.getElementById('stop_price').value);
 
             let errors = [];
 
@@ -156,9 +172,24 @@
                 errors.push('Quantity must be at least 0.0001');
             }
 
-            // Validate price for limit orders
+            // Validate side
+            if (!side) {
+                errors.push('Please select Buy or Sell');
+            }
+
+            // Validate price for limit and stop-limit orders
             if (orderType === 'LIMIT' && (!price || price <= 0)) {
                 errors.push('Price is required for limit orders and must be positive');
+            }
+
+            // Validate stop price for stop-limit orders
+            if (orderType === 'STOP_LIMIT') {
+                if (!price || price <= 0) {
+                    errors.push('Price is required for stop-limit orders and must be positive');
+                }
+                if (!stopPrice || stopPrice <= 0) {
+                    errors.push('Stop price is required for stop-limit orders and must be positive');
+                }
             }
 
             if (errors.length > 0) {

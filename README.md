@@ -11,6 +11,13 @@ A web-based trading interface for placing Market and Limit orders on the Binance
 - 🎯 **Real-time Results**: Immediate feedback on order execution
 - 📱 **Mobile Responsive**: Works seamlessly on desktop and mobile devices
 - ⚠️ **Testnet Safe**: Uses Binance Futures Testnet - no real money involved
+- **Futures Trading**: Place market and limit orders on Binance Futures Testnet
+- **Advanced Order Types**: Support for Market, Limit, and Stop-Limit orders
+- **Web Interface**: User-friendly web UI for order placement
+- **Real-time Logging**: Comprehensive logging of all API interactions
+- **Error Handling**: Robust error handling and user feedback
+- **Time Synchronization**: Automatic time sync with Binance servers
+- **Spot Trading**: Place market, limit, and stop-limit orders on Binance Vision Testnet
 
 ## 🏗️ Project Structure
 

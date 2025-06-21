@@ -68,7 +68,8 @@ class BinanceClient:
         quantity: float, 
         order_type: str, 
         side: str, 
-        price: Optional[float] = None
+        price: Optional[float] = None,
+        stop_price: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Place an order on Binance Vision Testnet (Spot Trading)
@@ -76,9 +77,10 @@ class BinanceClient:
         Args:
             symbol: Trading pair (e.g., 'BTCUSDT')
             quantity: Order quantity
-            order_type: 'MARKET' or 'LIMIT'
+            order_type: 'MARKET', 'LIMIT', or 'STOP_LIMIT'
             side: 'BUY' or 'SELL'
             price: Price for limit orders (optional for market orders)
+            stop_price: Stop price for stop-limit orders (required for STOP_LIMIT)
         
         Returns:
             Dict containing order response
@@ -87,9 +89,25 @@ class BinanceClient:
             BinanceAPIException: If API call fails
             ValueError: If invalid parameters provided
         """
+        print(f"Placing order with API_KEY: {self.api_key[:10]}...")
+        print(f"Order details: {symbol}, {quantity}, {order_type}, {side}, price={price}, stop_price={stop_price}")
+        
         try:
-            print(f"Placing order with API_KEY: {self.api_key[:10]}...")
-            print(f"Order details: {symbol}, {quantity}, {order_type}, {side}, price={price}")
+            # Validate inputs
+            if not symbol or not quantity or not order_type or not side:
+                raise ValueError("All parameters are required")
+            
+            if order_type not in ['MARKET', 'LIMIT', 'STOP_LIMIT']:
+                raise ValueError("Order type must be 'MARKET', 'LIMIT', or 'STOP_LIMIT'")
+            
+            if side not in ['BUY', 'SELL']:
+                raise ValueError("Side must be 'BUY' or 'SELL'")
+            
+            if order_type in ['LIMIT', 'STOP_LIMIT'] and not price:
+                raise ValueError("Price is required for LIMIT and STOP_LIMIT orders")
+            
+            if order_type == 'STOP_LIMIT' and not stop_price:
+                raise ValueError("Stop price is required for STOP_LIMIT orders")
             
             # Use the correct Spot trading methods
             if order_type == "MARKET":
@@ -121,8 +139,24 @@ class BinanceClient:
                         price=price,
                         timeInForce='GTC'
                     )
+            elif order_type == "STOP_LIMIT":
+                if price is None or stop_price is None:
+                    raise ValueError("Both price and stop_price are required for stop-limit orders")
+                
+                # For Stop-Limit orders, we use the generic order method
+                order_params = {
+                    'symbol': symbol,
+                    'side': side,
+                    'type': 'STOP_LOSS_LIMIT',
+                    'quantity': quantity,
+                    'price': price,
+                    'stopPrice': stop_price,
+                    'timeInForce': 'GTC'
+                }
+                
+                response = self.client.create_order(**order_params)
             else:
-                raise ValueError("Invalid order type. Must be 'MARKET' or 'LIMIT'")
+                raise ValueError("Invalid order type. Must be 'MARKET', 'LIMIT', or 'STOP_LIMIT'")
             
             print(f"Order placed successfully: {response}")
             return response
@@ -145,7 +179,7 @@ class BinanceClient:
                                 symbol=symbol,
                                 quantity=quantity
                             )
-                    else:  # LIMIT order
+                    elif order_type == "LIMIT":
                         if side == "BUY":
                             response = self.client.order_limit_buy(
                                 symbol=symbol,
@@ -160,20 +194,29 @@ class BinanceClient:
                                 price=price,
                                 timeInForce='GTC'
                             )
+                    elif order_type == "STOP_LIMIT":
+                        order_params = {
+                            'symbol': symbol,
+                            'side': side,
+                            'type': 'STOP_LOSS_LIMIT',
+                            'quantity': quantity,
+                            'price': price,
+                            'stopPrice': stop_price,
+                            'timeInForce': 'GTC'
+                        }
+                        response = self.client.create_order(**order_params)
+                    
+                    print(f"Order placed successfully after time sync: {response}")
                     return response
-                except Exception as retry_error:
-                    raise Exception(f"Timestamp sync failed: {str(retry_error)}")
+                except BinanceAPIException as retry_e:
+                    print(f"Order failed after time sync retry: {retry_e}")
+                    raise retry_e
             else:
-                # Re-raise with more specific error message
-                raise Exception(f"Binance API Error: {e.message}")
-        
-        except BinanceOrderException as e:
-            # Re-raise with more specific error message
-            raise Exception(f"Order Error: {e.message}")
-        
+                print(f"Order failed: {e}")
+                raise e
         except Exception as e:
-            # Handle any other exceptions
-            raise Exception(f"Unexpected error: {str(e)}")
+            print(f"Unexpected error placing order: {e}")
+            raise e
     
     def get_account_info(self) -> Dict[str, Any]:
         """Get spot account information"""
