@@ -16,7 +16,8 @@
    - `API_KEY`: Your Binance Spot Testnet API Key
    - `API_SECRET`: Your Binance Spot Testnet API Secret
 4. **Build Command:** `pip install -r requirements.txt`
-5. **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+5. **Start Command:** `bash start.sh`
+6. **Or use the render.yaml file for automatic configuration**
 
 ## Heroku Deployment
 
@@ -43,4 +44,5 @@
 - **Never commit your `.env` file** - it contains sensitive API keys
 - **Use Binance Spot Testnet** for testing (not mainnet)
 - **Get API keys from:** https://testnet.binance.vision/
-- **The app runs on port 8000** locally and uses `$PORT` on deployment platforms 
+- **The app runs on port 8000** locally and uses `$PORT` on deployment platforms
+- **Uses Uvicorn ASGI server** (not Gunicorn) 
