@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Result - Binance Futures Testnet</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Trade Result</h1>
+        </header>
+
+        <main>
+            {% if success %}
+            <!-- Success Result -->
+            <div class="card success-card">
+                <div class="status-header success">
+                    <h2>✅ Order Placed Successfully!</h2>
+                </div>
+                
+                <div class="order-details">
+                    <h3>📋 Order Details</h3>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label>Order ID:</label>
+                            <span class="value">{{ order_response.orderId }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Symbol:</label>
+                            <span class="value">{{ order_response.symbol }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Side:</label>
+                            <span class="value {{ 'buy-text' if order_response.side == 'BUY' else 'sell-text' }}">
+                                {{ '🟢 ' + order_response.side if order_response.side == 'BUY' else '🔴 ' + order_response.side }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Order Type:</label>
+                            <span class="value">{{ order_response.type }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Quantity:</label>
+                            <span class="value">{{ order_response.origQty }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Status:</label>
+                            <span class="value status-{{ order_response.status.lower() }}">{{ order_response.status }}</span>
+                        </div>
+                        
+                        {% if order_response.executedQty %}
+                        <div class="detail-item">
+                            <label>Executed Quantity:</label>
+                            <span class="value">{{ order_response.executedQty }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order_response.avgPrice and order_response.avgPrice != '0' %}
+                        <div class="detail-item">
+                            <label>Average Price:</label>
+                            <span class="value">${{ order_response.avgPrice }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order_response.price and order_response.price != '0' %}
+                        <div class="detail-item">
+                            <label>Limit Price:</label>
+                            <span class="value">${{ order_response.price }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order_response.cumQuote and order_response.cumQuote != '0' %}
+                        <div class="detail-item">
+                            <label>Total Value:</label>
+                            <span class="value">${{ order_response.cumQuote }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="trade-summary">
+                    <h3>📊 Trade Summary</h3>
+                    <p>
+                        {% if order_response.side == 'BUY' %}
+                        You have placed a <strong>{{ order_response.type.lower() }}</strong> order to <strong class="buy-text">buy {{ order_response.origQty }}</strong> 
+                        {% else %}
+                        You have placed a <strong>{{ order_response.type.lower() }}</strong> order to <strong class="sell-text">sell {{ order_response.origQty }}</strong> 
+                        {% endif %}
+                        of <strong>{{ order_response.symbol }}</strong>.
+                        
+                        {% if order_response.status == 'FILLED' %}
+                        The order has been <strong class="success-text">completely filled</strong>.
+                        {% elif order_response.status == 'PARTIALLY_FILLED' %}
+                        The order has been <strong class="warning-text">partially filled</strong>.
+                        {% elif order_response.status == 'NEW' %}
+                        The order is <strong class="info-text">pending execution</strong>.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- Error Result -->
+            <div class="card error-card">
+                <div class="status-header error">
+                    <h2>❌ Order Failed</h2>
+                </div>
+                
+                <div class="error-details">
+                    <h3>🚨 Error Information</h3>
+                    <div class="error-message">
+                        <p>{{ error_message }}</p>
+                    </div>
+                </div>
+                
+                <div class="attempted-order">
+                    <h3>📋 Attempted Order Details</h3>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label>Symbol:</label>
+                            <span class="value">{{ trade_data.symbol }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Side:</label>
+                            <span class="value {{ 'buy-text' if trade_data.side == 'BUY' else 'sell-text' }}">
+                                {{ '🟢 ' + trade_data.side if trade_data.side == 'BUY' else '🔴 ' + trade_data.side }}
+                            </span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Order Type:</label>
+                            <span class="value">{{ trade_data.order_type }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>Quantity:</label>
+                            <span class="value">{{ trade_data.quantity }}</span>
+                        </div>
+                        
+                        {% if trade_data.price %}
+                        <div class="detail-item">
+                            <label>Price:</label>
+                            <span class="value">${{ trade_data.price }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="troubleshooting">
+                    <h3>🔧 Troubleshooting Tips</h3>
+                    <ul>
+                        <li>Verify that the trading symbol is correct and available on Binance Futures</li>
+                        <li>Check that your testnet account has sufficient balance</li>
+                        <li>Ensure the quantity meets the minimum order requirements</li>
+                        <li>For limit orders, verify the price is within acceptable range</li>
+                        <li>Try using a different symbol or adjusting the order parameters</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">🏠 Back to Home</a>
+                {% if success %}
+                <a href="/" class="btn btn-secondary">📈 Place Another Order</a>
+                {% else %}
+                <a href="/" class="btn btn-warning">🔄 Try Again</a>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <p>⚠️ Testnet Environment - No Real Money Involved</p>
+            <p><small>Order timestamp: {{ order_response.time if success and order_response.time else '' }}</small></p>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-refresh account info or provide additional functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add any dynamic behavior here
+            
+            // Highlight important information
+            const statusElements = document.querySelectorAll('.status-filled, .status-new, .status-partially_filled');
+            statusElements.forEach(el => {
+                if (el.textContent.includes('FILLED')) {
+                    el.style.color = '#22c55e';
+                } else if (el.textContent.includes('NEW')) {
+                    el.style.color = '#3b82f6';
+                } else if (el.textContent.includes('PARTIALLY')) {
+                    el.style.color = '#f59e0b';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

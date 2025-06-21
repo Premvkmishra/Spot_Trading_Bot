@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binance Futures Testnet Trading Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Binance Futures Testnet Trading Bot</h1>
+            <p>Place Market and Limit orders on Binance Futures Testnet</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>📊 Place New Order</h2>
+                
+                <!-- Display validation errors if any -->
+                {% if errors %}
+                <div class="error-container">
+                    <h3>❌ Validation Errors:</h3>
+                    <ul class="error-list">
+                        {% for error in errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/place_order" class="trade-form">
+                    <div class="form-group">
+                        <label for="symbol">Trading Symbol:</label>
+                        <input 
+                            type="text" 
+                            id="symbol" 
+                            name="symbol" 
+                            placeholder="e.g., BTCUSDT" 
+                            required
+                            pattern="[A-Z]+"
+                            title="Use uppercase letters only (e.g., BTCUSDT)"
+                        >
+                        <small>Enter the trading pair in uppercase (e.g., BTCUSDT, ETHUSDT)</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity">Quantity:</label>
+                            <input 
+                                type="number" 
+                                id="quantity" 
+                                name="quantity" 
+                                step="0.0001" 
+                                min="0.0001"
+                                placeholder="0.001" 
+                                required
+                            >
+                            <small>Minimum: 0.0001</small>
+                        </div>
+
+                        <div class="form-group" id="price-group" style="display: none;">
+                            <label for="price">Price (USDT):</label>
+                            <input 
+                                type="number" 
+                                id="price" 
+                                name="price" 
+                                step="0.01" 
+                                min="0.01"
+                                placeholder="60000.00"
+                            >
+                            <small>For limit orders only</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="order_type">Order Type:</label>
+                            <select id="order_type" name="order_type" required onchange="togglePriceField()">
+                                <option value="">Select Order Type</option>
+                                <option value="MARKET">Market Order</option>
+                                <option value="LIMIT">Limit Order</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="side">Side:</label>
+                            <select id="side" name="side" required>
+                                <option value="">Select Side</option>
+                                <option value="BUY" class="buy-option">🟢 Buy</option>
+                                <option value="SELL" class="sell-option">🔴 Sell</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        📈 Place Order
+                    </button>
+                </form>
+            </div>
+
+            <div class="info-card">
+                <h3>ℹ️ Information</h3>
+                <ul>
+                    <li><strong>Market Orders:</strong> Execute immediately at current market price</li>
+                    <li><strong>Limit Orders:</strong> Execute only at your specified price or better</li>
+                    <li><strong>Testnet:</strong> This uses Binance Futures Testnet - no real money involved</li>
+                    <li><strong>Symbols:</strong> Use standard Binance futures symbols (e.g., BTCUSDT, ETHUSDT)</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>⚠️ Testnet Environment - No Real Money Involved</p>
+        </footer>
+    </div>
+
+    <script>
+        function togglePriceField() {
+            const orderType = document.getElementById('order_type').value;
+            const priceGroup = document.getElementById('price-group');
+            const priceInput = document.getElementById('price');
+            
+            if (orderType === 'LIMIT') {
+                priceGroup.style.display = 'block';
+                priceInput.required = true;
+            } else {
+                priceGroup.style.display = 'none';
+                priceInput.required = false;
+                priceInput.value = '';
+            }
+        }
+
+        // Auto-uppercase symbol input
+        document.getElementById('symbol').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Form validation on submit
+        document.querySelector('.trade-form').addEventListener('submit', function(e) {
+            const symbol = document.getElementById('symbol').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const orderType = document.getElementById('order_type').value;
+            const side = document.getElementById('side').value;
+            const price = parseFloat(document.getElementById('price').value);
+
+            let errors = [];
+
+            // Validate symbol
+            if (!symbol || !/^[A-Z]{3,}USDT?$/.test(symbol)) {
+                errors.push('Invalid symbol format. Use format like BTCUSDT');
+            }
+
+            // Validate quantity
+            if (!quantity || quantity < 0.0001) {
+                errors.push('Quantity must be at least 0.0001');
+            }
+
+            // Validate price for limit orders
+            if (orderType === 'LIMIT' && (!price || price <= 0)) {
+                errors.push('Price is required for limit orders and must be positive');
+            }
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                alert('Please fix the following errors:\n\n' + errors.join('\n'));
+            }
+        });
+    </script>
+</body>
+</html>
